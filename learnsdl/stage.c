@@ -6,34 +6,28 @@
 #include <SDL_render.h>
 #include <stdlib.h>
 
-typedef struct BulletCache BulletCache;
-struct BulletCache {
-  SDL_Texture *texture;
-  int w;
-  int h;
-};
-
 struct Stage {
   SDL_Renderer *renderer;
   InputState *input_state;
+  Entity player;
   Entity *fighter_tail;
   Entity *bullet_tail;
-  BulletCache bullet_cache;
+  EntityTexture player_texture;
+  EntityTexture bullet_texture;
+  EntityTexture enemy_texture;
 };
 
 static void fire_bullet(Stage *stage, float offset_y) {
-  Entity *player = stage->fighter_tail;
+  Entity const *player = &stage->player;
   Entity *bullet = malloc(sizeof(Entity));
-  BulletCache *cache = &stage->bullet_cache;
 
   (*bullet) = (Entity){
-      .x = player->x + player->w,
-      .y = player->y + player->h / 2.0 - offset_y * cache->h,
+      .x = player->x + player->texture.w,
+      .y = player->y + player->texture.h / 2.0 -
+           offset_y * stage->bullet_texture.h,
       .dx = PLAYER_BULLET_SPEED,
-			.dy = randf() * 4 - 2,
-      .w = cache->w,
-      .h = cache->h,
-      .texture = cache->texture,
+      .dy = randf() * 4 - 2,
+      .texture = stage->bullet_texture,
       .health = 1,
       .next = stage->bullet_tail,
   };
@@ -43,8 +37,8 @@ static void fire_bullet(Stage *stage, float offset_y) {
 }
 
 static void do_player(Stage *stage) {
-  Entity *player = stage->fighter_tail;
-  InputState *input_state = stage->input_state;
+  Entity *player = &stage->player;
+  InputState const *input_state = stage->input_state;
 
   player->dx = 0;
   player->dy = 0;
@@ -95,38 +89,39 @@ static void logic(Stage *stage) {
 
 static void blit_list(SDL_Renderer *renderer, Entity *head) {
   for (Entity *entity = head; entity; entity = entity->next) {
-    blit(renderer, entity->texture, entity->x, entity->y);
+    blit(renderer, entity->texture.ref, entity->x, entity->y);
   }
 }
 
 static void draw(Stage *stage) {
-  blit_list(stage->renderer, stage->fighter_tail);
+  blit_list(stage->renderer, &stage->player);
   blit_list(stage->renderer, stage->bullet_tail);
+}
+
+static EntityTexture create_entity_texture(SDL_Renderer *renderer,
+                                           char const path[static 1]) {
+  EntityTexture texture = {.ref = load_texture(renderer, path)};
+  SDL_QueryTexture(texture.ref, 0, 0, &texture.w, &texture.h);
+  return texture;
 }
 
 Stage *stage_new(App *app) { return stage_init(malloc(sizeof(Stage)), app); }
 
 Stage *stage_init(Stage *stage, App *app) {
-  Entity *player = malloc(sizeof(Entity));
   SDL_Renderer *renderer = app_get_renderer(app);
 
-  (*player) = (Entity){
-      .x = 100,
-      .y = 100,
-      .texture = load_texture(renderer, "gfx/player.png"),
-  };
-  SDL_QueryTexture(player->texture, 0, 0, &player->w, &player->h);
   (*stage) = (Stage){
       .renderer = renderer,
-      .fighter_tail = player,
-      .bullet_cache =
-          (BulletCache){
-              .texture = load_texture(renderer, "gfx/bullet.png"),
-          },
       .input_state = app_get_input_state(app),
+      .player_texture = create_entity_texture(renderer, "gfx/player.png"),
+      .bullet_texture = create_entity_texture(renderer, "gfx/bullet.png"),
+      .enemy_texture = create_entity_texture(renderer, "gfx/enemy.png"),
   };
-  SDL_QueryTexture(stage->bullet_cache.texture, 0, 0, &stage->bullet_cache.w,
-                   &stage->bullet_cache.h);
+  stage->player = (Entity){
+      .x = 100,
+      .y = 100,
+      .texture = stage->player_texture,
+  };
 
   return stage;
 }
@@ -139,7 +134,6 @@ void stage_invoke(Stage *stage) {
 void stage_destroy(Stage *stage) {
   for (Entity *fighter = stage->fighter_tail; fighter;) {
     Entity *next = fighter->next;
-    SDL_DestroyTexture(fighter->texture);
     free(fighter);
     fighter = next;
   }
@@ -148,6 +142,8 @@ void stage_destroy(Stage *stage) {
     free(bullet);
     bullet = next;
   }
-  SDL_DestroyTexture(stage->bullet_cache.texture);
+  SDL_DestroyTexture(stage->player_texture.ref);
+  SDL_DestroyTexture(stage->bullet_texture.ref);
+  SDL_DestroyTexture(stage->enemy_texture.ref);
   free(stage);
 }

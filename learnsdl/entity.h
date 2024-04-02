@@ -3,17 +3,22 @@
 
 #include <SDL.h>
 
-typedef struct Entity Entity;
-struct Entity {
+typedef struct EntityTexture EntityTexture;
+struct EntityTexture {
+  SDL_Texture *ref;
   int w;
   int h;
+};
+
+typedef struct Entity Entity;
+struct Entity {
   float x;
   float y;
   float dx;
   float dy;
   int health;
   int reload;
-  SDL_Texture *texture;
+  EntityTexture texture;
   Entity *next;
 };
 
