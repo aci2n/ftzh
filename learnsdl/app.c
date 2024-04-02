@@ -5,7 +5,7 @@
 struct App {
   SDL_Renderer *renderer;
   SDL_Window *window;
-	InputState input_state;
+  InputState input_state[MAX_KEYBOARD_KEYS];
 };
 
 App *app_new() { return app_init(malloc(sizeof(App))); }
@@ -53,6 +53,4 @@ void app_destroy(App *app) {
   free(app);
 }
 
-InputState* app_get_input_state(App* app) {
-	return &app->input_state;
-}
+InputState *app_get_input_state(App *app) { return app->input_state; }

@@ -5,15 +5,7 @@
 #include <stdbool.h>
 
 typedef struct App App;
-typedef struct InputState InputState;
-
-struct InputState {
-  bool up : 1;
-  bool down : 1;
-  bool left : 1;
-  bool right : 1;
-  bool fire : 1;
-};
+typedef bool InputState;
 
 App *app_new();
 App *app_init(App *app);
