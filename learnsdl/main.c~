@@ -1,0 +1,4 @@
+
+
+int main(size_t argc, char const* const argv[static argc - 1]) {
+}
