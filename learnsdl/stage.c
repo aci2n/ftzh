@@ -43,16 +43,16 @@ static void fire_bullet(Stage *stage, float offset_y) {
 static void do_player(Stage *stage) {
   Entity *player = &stage->player;
   InputState const *input_state = stage->input_state;
-	float speed = PLAYER_SPEED;
+  float speed = PLAYER_SPEED;
 
   player->dx = 0;
   player->dy = 0;
   if (player->reload > 0) {
     player->reload--;
   }
-	if (input_state[SDL_SCANCODE_LSHIFT]) {
-		speed *= PLAYER_SPEEDUP_RATE;
-	}
+  if (input_state[SDL_SCANCODE_LSHIFT]) {
+    speed *= PLAYER_SPEEDUP_RATE;
+  }
   if (input_state[SDL_SCANCODE_UP]) {
     player->dy = -speed;
   }
@@ -133,14 +133,13 @@ static void spawn_enemies(Stage *stage) {
 }
 
 static void do_collisions(Stage *stage) {
- bullet:
   for (Entity *bullet = stage->bullet_tail; bullet; bullet = bullet->next) {
     for (Entity *enemy = stage->fighter_tail; enemy; enemy = enemy->next) {
       if (entity_collision(bullet, enemy)) {
-        if (--bullet->health) {
-					goto bullet;
-				}
         enemy->health--;
+        if (--bullet->health <= 0) {
+          break;
+				}
       }
     }
   }
