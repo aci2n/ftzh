@@ -1,18 +1,11 @@
-#include "SDL_render.h"
 #include "app.h"
 #include "draw.h"
 #include "entity.h"
 #include "input.h"
 #include <SDL.h>
+#include <SDL_render.h>
 #include <stdbool.h>
 #include <stdlib.h>
-
-void prepare_scene(SDL_Renderer *renderer) {
-  SDL_SetRenderDrawColor(renderer, 96, 128, 255, 255);
-  SDL_RenderClear(renderer);
-}
-
-void present_scene(SDL_Renderer *renderer) { SDL_RenderPresent(renderer); }
 
 int main(int argc, char const *const argv[static argc - 1]) {
   App *app = app_new();
@@ -23,6 +16,8 @@ int main(int argc, char const *const argv[static argc - 1]) {
   while (true) {
     prepare_scene(renderer);
     do_input();
+    blit(renderer, entity_get_texture(player), entity_get_x(player),
+         entity_get_y(player));
     present_scene(renderer);
     SDL_Delay(16);
   }

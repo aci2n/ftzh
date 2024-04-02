@@ -14,6 +14,13 @@ void blit(SDL_Renderer *renderer, SDL_Texture *texture, int x, int y) {
       .x = x,
       .y = y,
   };
-  SDL_QueryTexture(texture, 0, 0, &rect.x, &rect.y);
+  SDL_QueryTexture(texture, 0, 0, &rect.w, &rect.h);
   SDL_RenderCopy(renderer, texture, 0, &rect);
 }
+
+void prepare_scene(SDL_Renderer *renderer) {
+  SDL_SetRenderDrawColor(renderer, 96, 128, 255, 255);
+  SDL_RenderClear(renderer);
+}
+
+void present_scene(SDL_Renderer *renderer) { SDL_RenderPresent(renderer); }
