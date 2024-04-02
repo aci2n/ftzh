@@ -1,14 +1,15 @@
 #include "app.h"
 #include "defs.h"
+#include <SDL_image.h>
 
 struct App {
   SDL_Renderer *renderer;
   SDL_Window *window;
 };
 
-App* app_new() { return app_init(malloc(sizeof(App *))); }
+App *app_new() { return app_init(malloc(sizeof(App))); }
 
-App* app_init(App *app) {
+App *app_init(App *app) {
   if (SDL_Init(SDL_INIT_VIDEO) < 0) {
     fprintf(stderr, "couldn't initialize SDL: %s\n", SDL_GetError());
     exit(1);
@@ -31,12 +32,14 @@ App* app_init(App *app) {
     exit(1);
   }
 
+  IMG_Init(IMG_INIT_PNG | IMG_INIT_JPG);
+
   (*app) = (App){
       .window = window,
       .renderer = renderer,
   };
 
-	return app;
+  return app;
 }
 
 SDL_Renderer *app_get_renderer(App *app) { return app->renderer; }

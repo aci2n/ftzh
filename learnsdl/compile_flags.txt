@@ -1,1 +1,7 @@
 -I/usr/include/SDL2
+-I/usr/include/libpng16
+-I/usr/include/webp
+
+-D_REENTRANT
+-DHWY_SHARED_DEFINE
+-DAVIF_DLL
