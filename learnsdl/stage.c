@@ -1,8 +1,10 @@
 #include "stage.h"
-#include "SDL_render.h"
 #include "defs.h"
 #include "draw.h"
 #include "entity.h"
+#include "tools.h"
+#include <SDL_render.h>
+#include <stdlib.h>
 
 typedef struct BulletCache BulletCache;
 struct BulletCache {
@@ -28,6 +30,7 @@ static void fire_bullet(Stage *stage, float offset_y) {
       .x = player->x + player->w,
       .y = player->y + player->h / 2.0 - offset_y * cache->h,
       .dx = PLAYER_BULLET_SPEED,
+			.dy = randf() * 4 - 2,
       .w = cache->w,
       .h = cache->h,
       .texture = cache->texture,
@@ -35,7 +38,7 @@ static void fire_bullet(Stage *stage, float offset_y) {
       .next = stage->bullet_tail,
   };
 
-  printf("fire bullet: bullet=%p tail=%p\n", bullet, stage->bullet_tail);
+  /* printf("fire bullet: bullet=%p tail=%p\n", bullet, stage->bullet_tail); */
   stage->bullet_tail = bullet;
 }
 
@@ -62,7 +65,7 @@ static void do_player(Stage *stage) {
   }
   if (input_state[SDL_SCANCODE_LCTRL] && player->reload == 0) {
     fire_bullet(stage, -1.5);
-		fire_bullet(stage, 0.5);
+    fire_bullet(stage, 0.5);
   }
   player->x += player->dx;
   player->y += player->dy;
@@ -71,7 +74,7 @@ static void do_player(Stage *stage) {
 static void do_bullets(Stage *stage) {
   Entity **prev = &stage->bullet_tail;
 
-  for (Entity *bullet = stage->bullet_tail; bullet;) {
+  for (Entity *bullet = *prev; bullet;) {
     Entity **next = &bullet->next;
     bullet->x += bullet->dx;
     bullet->y += bullet->dy;
@@ -112,7 +115,7 @@ Stage *stage_init(Stage *stage, App *app) {
       .y = 100,
       .texture = load_texture(renderer, "gfx/player.png"),
   };
-	SDL_QueryTexture(player->texture, 0, 0, &player->w, &player->h);
+  SDL_QueryTexture(player->texture, 0, 0, &player->w, &player->h);
   (*stage) = (Stage){
       .renderer = renderer,
       .fighter_tail = player,
