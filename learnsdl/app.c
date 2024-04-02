@@ -5,6 +5,7 @@
 struct App {
   SDL_Renderer *renderer;
   SDL_Window *window;
+	InputState input_state;
 };
 
 App *app_new() { return app_init(malloc(sizeof(App))); }
@@ -50,4 +51,8 @@ void app_destroy(App *app) {
   free(app->window);
   free(app->renderer);
   free(app);
+}
+
+InputState* app_get_input_state(App* app) {
+	return &app->input_state;
 }
