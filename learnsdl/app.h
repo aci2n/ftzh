@@ -8,17 +8,18 @@ typedef struct App App;
 typedef struct InputState InputState;
 
 struct InputState {
-  bool up;
-	bool down;
-	bool left;
-	bool right;
+  bool up : 1;
+  bool down : 1;
+  bool left : 1;
+  bool right : 1;
+  bool fire : 1;
 };
 
-App* app_new();
-App* app_init(App* app);
-void app_destroy(App* app);
-SDL_Renderer* app_get_renderer(App* app);
-SDL_Window* app_get_window(App* app);
-InputState* app_get_input_state(App* app);
+App *app_new();
+App *app_init(App *app);
+void app_destroy(App *app);
+SDL_Renderer *app_get_renderer(App *app);
+SDL_Window *app_get_window(App *app);
+InputState *app_get_input_state(App *app);
 
 #endif

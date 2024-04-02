@@ -1,5 +1,6 @@
 #include "input.h"
 #include "SDL_events.h"
+#include "SDL_scancode.h"
 #include "app.h"
 #include <SDL.h>
 
@@ -21,6 +22,9 @@ void do_key_change(InputState *input_state, SDL_KeyboardEvent *event,
     break;
   case SDL_SCANCODE_RIGHT:
     input_state->right = key_state;
+    break;
+  case SDL_SCANCODE_LCTRL:
+    input_state->fire = key_state;
     break;
   default:
     break;
