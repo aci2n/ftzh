@@ -75,6 +75,5 @@ Entity *entity_get_next(Entity *entity) {
 }
 
 void entity_destroy(Entity *entity) {
-	free(entity->texture);
 	free(entity);
 }

@@ -9,13 +9,13 @@ struct Stage {
   Entity *fighter_tail;
   Entity *bullet_tail;
   Delegate *delegate;
+	SDL_Texture *bullet_texture;
 };
 
 static void fire_bullet(Stage *stage) {
   Entity *player = stage->fighter_tail;
   Entity *bullet =
-      entity_new(entity_get_x(player), entity_get_y(player),
-                 load_texture(app_get_renderer(stage->app), "gfx/bullet.png"));
+      entity_new(entity_get_x(player), entity_get_y(player), stage->bullet_texture);
 
   entity_set_dx(bullet, PLAYER_BULLET_SPEED);
   entity_set_health(bullet, 1);
@@ -114,6 +114,7 @@ Stage *stage_init(Stage *stage, App *app) {
       .app = app,
       .fighter_tail = player,
       .delegate = delegate,
+			.bullet_texture = load_texture(app_get_renderer(app), "gfx/bullet.png"),
   };
   return stage;
 }
