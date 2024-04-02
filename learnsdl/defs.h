@@ -11,6 +11,7 @@
 #define PLAYER_SPEED 8
 #define PLAYER_BULLET_SPEED 16
 #define PLAYER_RELOAD_RATE 8
+#define PLAYER_SPEEDUP_RATE 1.5
 
 #define ENEMY_DY_MAX 2
 #define ENEMY_DY_FACTOR 50.0
@@ -18,6 +19,10 @@
 #define ENEMY_RAND_SPAWN_RATE 30
 #define ENEMY_DX_MIN 2
 #define ENEMY_DX_MAX 6
+#define ENEMY_STARTING_HEALTH 4
+
+#define SIDE_PLAYER 0
+#define SIDE_ENEMY 1
 
 #endif
 

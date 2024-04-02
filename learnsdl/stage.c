@@ -1,4 +1,5 @@
 #include "stage.h"
+#include "SDL_scancode.h"
 #include "defs.h"
 #include "draw.h"
 #include "entity.h"
@@ -32,6 +33,7 @@ static void fire_bullet(Stage *stage, float offset_y) {
       .texture = stage->bullet_texture,
       .health = 1,
       .next = stage->bullet_tail,
+      .side = SIDE_PLAYER,
   };
 
   /* printf("fire bullet: bullet=%p tail=%p\n", bullet, stage->bullet_tail); */
@@ -41,23 +43,27 @@ static void fire_bullet(Stage *stage, float offset_y) {
 static void do_player(Stage *stage) {
   Entity *player = &stage->player;
   InputState const *input_state = stage->input_state;
+	float speed = PLAYER_SPEED;
 
   player->dx = 0;
   player->dy = 0;
   if (player->reload > 0) {
     player->reload--;
   }
+	if (input_state[SDL_SCANCODE_LSHIFT]) {
+		speed *= PLAYER_SPEEDUP_RATE;
+	}
   if (input_state[SDL_SCANCODE_UP]) {
-    player->dy = -PLAYER_SPEED;
+    player->dy = -speed;
   }
   if (input_state[SDL_SCANCODE_DOWN]) {
-    player->dy = PLAYER_SPEED;
+    player->dy = speed;
   }
   if (input_state[SDL_SCANCODE_RIGHT]) {
-    player->dx = PLAYER_SPEED;
+    player->dx = speed;
   }
   if (input_state[SDL_SCANCODE_LEFT]) {
-    player->dx = -PLAYER_SPEED;
+    player->dx = -speed;
   }
   if (input_state[SDL_SCANCODE_LCTRL] && player->reload == 0) {
     fire_bullet(stage, -1.5);
@@ -75,7 +81,7 @@ static void do_bullets(Stage *stage) {
     Entity **next = &bullet->next;
     bullet->x += bullet->dx;
     bullet->y += bullet->dy;
-    if (bullet->x >= SCREEN_WIDTH) {
+    if (bullet->health <= 0 || bullet->x >= SCREEN_WIDTH) {
       *prev = *next;
       free(bullet);
     } else {
@@ -92,7 +98,7 @@ static void do_fighters(Stage *stage) {
     Entity **next = &fighter->next;
     fighter->x += fighter->dx;
     fighter->y += sin(fighter->x / ENEMY_DY_FACTOR) * fighter->dy;
-    if (fighter->x < -fighter->texture.w) {
+    if (fighter->health <= 0 || fighter->x <= -fighter->texture.w) {
       *prev = *next;
       free(fighter);
     } else {
@@ -117,6 +123,8 @@ static void spawn_enemies(Stage *stage) {
       .dy = randf() * ENEMY_DY_MAX,
       .texture = stage->enemy_texture,
       .next = stage->fighter_tail,
+      .side = SIDE_ENEMY,
+      .health = ENEMY_STARTING_HEALTH,
   };
 
   stage->fighter_tail = enemy;
@@ -124,7 +132,22 @@ static void spawn_enemies(Stage *stage) {
       ENEMY_BASE_SPAWN_RATE + rand() % ENEMY_RAND_SPAWN_RATE;
 }
 
+static void do_collisions(Stage *stage) {
+ bullet:
+  for (Entity *bullet = stage->bullet_tail; bullet; bullet = bullet->next) {
+    for (Entity *enemy = stage->fighter_tail; enemy; enemy = enemy->next) {
+      if (entity_collision(bullet, enemy)) {
+        if (--bullet->health) {
+					goto bullet;
+				}
+        enemy->health--;
+      }
+    }
+  }
+}
+
 static void logic(Stage *stage) {
+  do_collisions(stage);
   do_player(stage);
   do_fighters(stage);
   do_bullets(stage);
@@ -166,6 +189,7 @@ Stage *stage_init(Stage *stage, App *app) {
       .x = PLAYER_START_X,
       .y = PLAYER_START_Y,
       .texture = stage->player_texture,
+      .side = SIDE_PLAYER,
   };
 
   return stage;
