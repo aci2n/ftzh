@@ -8,29 +8,35 @@
 #include <math.h>
 #include <stdlib.h>
 
+enum {
+	STAGE_TEXTURE_PLAYER,
+	STAGE_TEXTURE_ENEMY,
+	STAGE_TEXTURE_BULLET,
+	STAGE_TEXTURE_COUNT,
+};
+
 struct Stage {
   SDL_Renderer *renderer;
   InputState *input_state;
   Entity player;
   Entity *fighter_tail;
   Entity *bullet_tail;
-  EntityTexture player_texture;
-  EntityTexture bullet_texture;
-  EntityTexture enemy_texture;
+  EntityTexture textures[STAGE_TEXTURE_COUNT];
   int enemy_spawn_timer;
 };
 
 static void fire_bullet(Stage *stage, float offset_y) {
   Entity const *player = &stage->player;
   Entity *bullet = malloc(sizeof(Entity));
+	EntityTexture const texture = stage->textures[STAGE_TEXTURE_BULLET];
 
   (*bullet) = (Entity){
       .x = player->x + player->texture.w,
       .y = player->y + player->texture.h / 2.0 -
-           offset_y * stage->bullet_texture.h,
+           offset_y * texture.h,
       .dx = PLAYER_BULLET_SPEED,
       .dy = randf() * 2 - 1,
-      .texture = stage->bullet_texture,
+      .texture = texture,
       .health = 1,
       .next = stage->bullet_tail,
       .side = SIDE_PLAYER,
@@ -121,7 +127,7 @@ static void spawn_enemies(Stage *stage) {
       .y = rand() % SCREEN_HEIGHT,
       .dx = -(ENEMY_DX_MIN + rand() % (ENEMY_DX_MAX - ENEMY_DX_MIN)),
       .dy = randf() * ENEMY_DY_MAX,
-      .texture = stage->enemy_texture,
+      .texture = stage->textures[STAGE_TEXTURE_ENEMY],
       .next = stage->fighter_tail,
       .side = SIDE_ENEMY,
       .health = ENEMY_STARTING_HEALTH,
@@ -180,14 +186,16 @@ Stage *stage_init(Stage *stage, App *app) {
   (*stage) = (Stage){
       .renderer = renderer,
       .input_state = app_get_input_state(app),
-      .player_texture = create_entity_texture(renderer, "gfx/player.png"),
-      .bullet_texture = create_entity_texture(renderer, "gfx/bullet.png"),
-      .enemy_texture = create_entity_texture(renderer, "gfx/enemy.png"),
+      .textures = {
+				[STAGE_TEXTURE_PLAYER] = create_entity_texture(renderer, "gfx/player.png"),
+				[STAGE_TEXTURE_BULLET] = create_entity_texture(renderer, "gfx/bullet.png"),
+				[STAGE_TEXTURE_ENEMY] = create_entity_texture(renderer, "gfx/enemy.png"),
+			}
   };
   stage->player = (Entity){
       .x = PLAYER_START_X,
       .y = PLAYER_START_Y,
-      .texture = stage->player_texture,
+      .texture = stage->textures[STAGE_TEXTURE_PLAYER],
       .side = SIDE_PLAYER,
   };
 
@@ -210,8 +218,8 @@ void stage_destroy(Stage *stage) {
     free(bullet);
     bullet = next;
   }
-  SDL_DestroyTexture(stage->player_texture.ref);
-  SDL_DestroyTexture(stage->bullet_texture.ref);
-  SDL_DestroyTexture(stage->enemy_texture.ref);
+	for (size_t i = 0; i < STAGE_TEXTURE_COUNT; i++) {
+		SDL_DestroyTexture(stage->textures[i].ref);
+	}
   free(stage);
 }
