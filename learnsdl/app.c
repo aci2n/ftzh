@@ -1,4 +1,6 @@
 #include "app.h"
+#include "SDL_render.h"
+#include "SDL_video.h"
 #include "defs.h"
 #include <SDL_image.h>
 
@@ -48,9 +50,10 @@ SDL_Renderer *app_get_renderer(App *app) { return app->renderer; }
 SDL_Window *app_get_window(App *app) { return app->window; }
 
 void app_destroy(App *app) {
-  free(app->window);
-  free(app->renderer);
+	SDL_DestroyWindow(app->window);
+	SDL_DestroyRenderer(app->renderer);
   free(app);
+	SDL_Quit();
 }
 
 InputState *app_get_input_state(App *app) { return app->input_state; }

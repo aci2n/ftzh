@@ -1,122 +1,148 @@
 #include "stage.h"
+#include "SDL_render.h"
 #include "defs.h"
-#include "delegate.h"
 #include "draw.h"
 #include "entity.h"
 
+typedef struct BulletCache BulletCache;
+struct BulletCache {
+  SDL_Texture *texture;
+  int w;
+  int h;
+};
+
 struct Stage {
-  App *app;
+  SDL_Renderer *renderer;
+  InputState *input_state;
   Entity *fighter_tail;
   Entity *bullet_tail;
-  Delegate *delegate;
-	SDL_Texture *bullet_texture;
+  BulletCache bullet_cache;
 };
 
 static void fire_bullet(Stage *stage) {
   Entity *player = stage->fighter_tail;
-  Entity *bullet =
-      entity_new(entity_get_x(player), entity_get_y(player), stage->bullet_texture);
+  Entity *bullet = malloc(sizeof(Entity));
+  BulletCache *cache = &stage->bullet_cache;
 
-  entity_set_dx(bullet, PLAYER_BULLET_SPEED);
-  entity_set_health(bullet, 1);
-  entity_set_y(bullet, entity_get_y(bullet) + entity_get_h(player) / 2.0 -
-                           entity_get_h(bullet) / 2.0);
-  entity_set_reload(player, 8);
+  (*bullet) = (Entity){
+      .x = player->x,
+      .y = player->y + player->h / 2.0 - cache->h / 2.0,
+      .dx = PLAYER_BULLET_SPEED,
+      .w = cache->w,
+      .h = cache->h,
+      .texture = cache->texture,
+      .health = 1,
+      .next = stage->bullet_tail,
+  };
 
   printf("fire bullet: bullet=%p tail=%p\n", bullet, stage->bullet_tail);
-  entity_set_next(bullet, stage->bullet_tail);
   stage->bullet_tail = bullet;
 }
 
 static void do_player(Stage *stage) {
   Entity *player = stage->fighter_tail;
-  InputState *input_state = app_get_input_state(stage->app);
+  InputState *input_state = stage->input_state;
 
-  entity_set_dx(player, 0);
-  entity_set_dy(player, 0);
-
-  if (entity_get_reload(player) > 0) {
-    entity_set_reload(player, entity_get_reload(player) - 1);
+  player->dx = 0;
+  player->dy = 0;
+  if (player->reload > 0) {
+    player->reload--;
   }
-
   if (input_state[SDL_SCANCODE_UP]) {
-    entity_set_dy(player, -PLAYER_SPEED);
+    player->dy = -PLAYER_SPEED;
   }
-
   if (input_state[SDL_SCANCODE_DOWN]) {
-    entity_set_dy(player, PLAYER_SPEED);
+    player->dy = PLAYER_SPEED;
   }
-
   if (input_state[SDL_SCANCODE_RIGHT]) {
-    entity_set_dx(player, PLAYER_SPEED);
+    player->dx = PLAYER_SPEED;
   }
-
   if (input_state[SDL_SCANCODE_LEFT]) {
-    entity_set_dx(player, -PLAYER_SPEED);
+    player->dx = -PLAYER_SPEED;
   }
-
-  if (input_state[SDL_SCANCODE_LCTRL] && entity_get_reload(player) == 0) {
+  if (input_state[SDL_SCANCODE_LCTRL] && player->reload == 0) {
     fire_bullet(stage);
   }
-
-  entity_move(player, entity_get_dx(player), entity_get_dy(player));
+  player->x += player->dx;
+  player->y += player->dy;
 }
 
 static void do_bullets(Stage *stage) {
-  Entity *prev = {0};
-  Entity *next = {0};
+  Entity **prev = &stage->bullet_tail;
 
-  for (Entity *bullet = stage->bullet_tail; bullet; bullet = next) {
-    next = entity_get_next(bullet);
-    entity_move(bullet, entity_get_dx(bullet), entity_get_dy(bullet));
-
-    if (entity_get_x(bullet) >= SCREEN_WIDTH) {
-      if (bullet == stage->bullet_tail) {
-        stage->bullet_tail = next;
-      } else {
-        entity_set_next(prev, next);
-      }
-      entity_destroy(bullet);
+  for (Entity *bullet = stage->bullet_tail; bullet;) {
+    Entity **next = &bullet->next;
+    bullet->x += bullet->dx;
+    bullet->y += bullet->dy;
+    if (bullet->x >= SCREEN_WIDTH) {
+      *prev = *next;
+      free(bullet);
     } else {
-			prev = bullet;
-		}
+      prev = next;
+    }
+    bullet = *next;
   }
 }
 
-static void logic(DelegateCtx *ctx) {
-  Stage *stage = (Stage *)ctx;
+static void logic(Stage *stage) {
   do_player(stage);
   do_bullets(stage);
 }
 
 static void blit_list(SDL_Renderer *renderer, Entity *head) {
-  for (Entity *entity = head; entity; entity = entity_get_next(entity)) {
-    blit(renderer, entity_get_texture(entity), entity_get_x(entity),
-         entity_get_y(entity));
+  for (Entity *entity = head; entity; entity = entity->next) {
+    blit(renderer, entity->texture, entity->x, entity->y);
   }
 }
 
-static void draw(DelegateCtx *ctx) {
-  Stage *stage = (Stage *)ctx;
-  SDL_Renderer *renderer = app_get_renderer(stage->app);
-  blit_list(renderer, stage->fighter_tail);
-  blit_list(renderer, stage->bullet_tail);
+static void draw(Stage *stage) {
+  blit_list(stage->renderer, stage->fighter_tail);
+  blit_list(stage->renderer, stage->bullet_tail);
 }
 
 Stage *stage_new(App *app) { return stage_init(malloc(sizeof(Stage)), app); }
 
 Stage *stage_init(Stage *stage, App *app) {
-  Entity *player = entity_new(
-      100, 100, load_texture(app_get_renderer(app), "gfx/player.png"));
-  Delegate *delegate = delegate_new(logic, draw, stage);
+  Entity *player = malloc(sizeof(Entity));
+  SDL_Renderer *renderer = app_get_renderer(app);
 
-  (*stage) = (Stage){
-      .app = app,
-      .fighter_tail = player,
-      .delegate = delegate,
-			.bullet_texture = load_texture(app_get_renderer(app), "gfx/bullet.png"),
+  (*player) = (Entity){
+      .x = 100,
+      .y = 100,
+      .texture = load_texture(renderer, "gfx/player.png"),
   };
+  (*stage) = (Stage){
+      .renderer = renderer,
+      .fighter_tail = player,
+      .bullet_cache =
+          (BulletCache){
+              .texture = load_texture(renderer, "gfx/bullet.png"),
+          },
+      .input_state = app_get_input_state(app),
+  };
+  SDL_QueryTexture(stage->bullet_cache.texture, 0, 0, &stage->bullet_cache.w,
+                   &stage->bullet_cache.h);
+
   return stage;
 }
 
-void stage_invoke(Stage *stage) { delegate_invoke(stage->delegate); }
+void stage_invoke(Stage *stage) {
+  logic(stage);
+  draw(stage);
+}
+
+void stage_destroy(Stage *stage) {
+  for (Entity *fighter = stage->fighter_tail; fighter;) {
+    Entity *next = fighter->next;
+    SDL_DestroyTexture(fighter->texture);
+    free(fighter);
+    fighter = next;
+  }
+  for (Entity *bullet = stage->bullet_tail; bullet;) {
+    Entity *next = bullet->next;
+    free(bullet);
+    bullet = next;
+  }
+  SDL_DestroyTexture(stage->bullet_cache.texture);
+  free(stage);
+}
