@@ -19,14 +19,14 @@ struct Stage {
   BulletCache bullet_cache;
 };
 
-static void fire_bullet(Stage *stage) {
+static void fire_bullet(Stage *stage, float offset_y) {
   Entity *player = stage->fighter_tail;
   Entity *bullet = malloc(sizeof(Entity));
   BulletCache *cache = &stage->bullet_cache;
 
   (*bullet) = (Entity){
-      .x = player->x,
-      .y = player->y + player->h / 2.0 - cache->h / 2.0,
+      .x = player->x + player->w,
+      .y = player->y + player->h / 2.0 - offset_y * cache->h,
       .dx = PLAYER_BULLET_SPEED,
       .w = cache->w,
       .h = cache->h,
@@ -61,7 +61,8 @@ static void do_player(Stage *stage) {
     player->dx = -PLAYER_SPEED;
   }
   if (input_state[SDL_SCANCODE_LCTRL] && player->reload == 0) {
-    fire_bullet(stage);
+    fire_bullet(stage, -1.5);
+		fire_bullet(stage, 0.5);
   }
   player->x += player->dx;
   player->y += player->dy;
@@ -111,6 +112,7 @@ Stage *stage_init(Stage *stage, App *app) {
       .y = 100,
       .texture = load_texture(renderer, "gfx/player.png"),
   };
+	SDL_QueryTexture(player->texture, 0, 0, &player->w, &player->h);
   (*stage) = (Stage){
       .renderer = renderer,
       .fighter_tail = player,

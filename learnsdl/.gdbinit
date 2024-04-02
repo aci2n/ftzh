@@ -1,2 +1,2 @@
 set debuginfod enabled off
-break main
+break fire_bullet
