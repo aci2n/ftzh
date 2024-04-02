@@ -8,6 +8,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <time.h>
+#include "audio.h"
 
 void cap_framerate(long then[static 1], float remainder[static 1]) {
   long const frame_time = SDL_GetTicks() - *then;
@@ -27,6 +28,8 @@ int main(int argc, char const *const argv[static argc - 1]) {
   Stage *stage = stage_new(app);
   long then = SDL_GetTicks64();
   float remainder = 0;
+
+	play_music("sound/mus.opus");
 
   while (true) {
     prepare_scene(renderer);

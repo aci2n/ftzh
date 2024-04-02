@@ -1,4 +1,4 @@
-EXTMODULES := sdl2 SDL2_image
+EXTMODULES := sdl2 SDL2_image SDL2_mixer
 CFLAGS += -ggdb -Og $(shell pkgconf --cflags $(EXTMODULES))
 LDFLAGS += $(shell pkgconf --libs $(EXTMODULES)) -lm
 OBJS := $(patsubst %.c, %.o, $(wildcard *.c))
