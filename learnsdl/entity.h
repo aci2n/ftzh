@@ -24,6 +24,8 @@ struct Entity {
   int side;
 };
 
-bool entity_collision(Entity const[static 1], Entity const[static 1]);
+bool entity_collision(Entity const[restrict static 1],
+                      Entity const[restrict static 1]);
+void entity_log(Entity const[static 1]);
 
 #endif
