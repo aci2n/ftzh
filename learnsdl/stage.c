@@ -23,19 +23,19 @@ struct Stage {
   SDL_Texture *textures[TEXTURE_COUNT];
 
   Entity player;
-  Entity *fighter_tail;
+  Entity *enemy_tail;
   Entity *bullet_tail;
   int enemy_spawn_timer;
   int reset_timer;
 };
 
 static void clear_entities(Stage *stage) {
-  for (Entity *fighter = stage->fighter_tail; fighter;) {
-    Entity *next = fighter->next;
-    free(fighter);
-    fighter = next;
+  for (Entity *enemy = stage->enemy_tail; enemy;) {
+    Entity *next = enemy->next;
+    free(enemy);
+    enemy = next;
   }
-  stage->fighter_tail = 0;
+  stage->enemy_tail = 0;
   for (Entity *bullet = stage->bullet_tail; bullet;) {
     Entity *next = bullet->next;
     free(bullet);
@@ -145,20 +145,20 @@ static void do_bullets(Stage *stage) {
   }
 }
 
-static void do_fighters(Stage *stage) {
-  Entity **prev = &stage->fighter_tail;
+static void do_enemys(Stage *stage) {
+  Entity **prev = &stage->enemy_tail;
 
-  for (Entity *fighter = *prev; fighter;) {
-    Entity **next = &fighter->next;
-    fighter->x += fighter->dx;
-    fighter->y += sin(fighter->x / ENEMY_DY_FACTOR) * fighter->dy;
-    if (fighter->health <= 0 || fighter->x <= -fighter->w) {
+  for (Entity *enemy = *prev; enemy;) {
+    Entity **next = &enemy->next;
+    enemy->x += enemy->dx;
+    enemy->y += sin(enemy->x / ENEMY_DY_FACTOR) * enemy->dy;
+    if (enemy->health <= 0 || enemy->x <= -enemy->w) {
       *prev = *next;
-      free(fighter);
+      free(enemy);
     } else {
       prev = next;
     }
-    fighter = *next;
+    enemy = *next;
   }
 }
 
@@ -182,12 +182,12 @@ static void spawn_enemies(Stage *stage) {
       .dx = -(ENEMY_DX_MIN + rand() % (ENEMY_DX_MAX - ENEMY_DX_MIN)),
       .dy = randf() * ENEMY_DY_MAX,
       .texture = stage->textures[TEXTURE_ENEMY],
-      .next = stage->fighter_tail,
+      .next = stage->enemy_tail,
       .side = SIDE_ENEMY,
       .health = ENEMY_STARTING_HEALTH,
   };
 
-  stage->fighter_tail = enemy;
+  stage->enemy_tail = enemy;
   stage->enemy_spawn_timer =
       ENEMY_BASE_SPAWN_RATE + rand() % ENEMY_RAND_SPAWN_RATE;
 }
@@ -196,7 +196,7 @@ static void do_collisions(Stage *stage) {
   Entity *player = &stage->player;
 
   for (Entity *bullet = stage->bullet_tail; bullet; bullet = bullet->next) {
-    for (Entity *enemy = stage->fighter_tail; enemy; enemy = enemy->next) {
+    for (Entity *enemy = stage->enemy_tail; enemy; enemy = enemy->next) {
       if (entity_collision(bullet, enemy)) {
         enemy->health--;
         if (--bullet->health <= 0) {
@@ -206,7 +206,7 @@ static void do_collisions(Stage *stage) {
     }
   }
 
-  for (Entity *enemy = stage->fighter_tail; enemy; enemy = enemy->next) {
+  for (Entity *enemy = stage->enemy_tail; enemy; enemy = enemy->next) {
     if (entity_collision(enemy, player)) {
       if (--player->health <= 0) {
         break;
@@ -225,7 +225,7 @@ static void logic(Stage *stage) {
   do_reset(stage);
   do_collisions(stage);
   do_player(stage);
-  do_fighters(stage);
+  do_enemys(stage);
   do_bullets(stage);
   spawn_enemies(stage);
 }
@@ -244,7 +244,7 @@ static void blit_list(SDL_Renderer *renderer, Entity *head) {
 
 static void draw(Stage *stage) {
   blit_list(stage->renderer, &stage->player);
-  blit_list(stage->renderer, stage->fighter_tail);
+  blit_list(stage->renderer, stage->enemy_tail);
   blit_list(stage->renderer, stage->bullet_tail);
 }
 
