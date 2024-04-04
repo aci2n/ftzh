@@ -9,13 +9,8 @@ SDL_Texture *load_texture(SDL_Renderer *renderer, char const *filename) {
   return IMG_LoadTexture(renderer, filename);
 }
 
-void blit(SDL_Renderer *renderer, SDL_Texture *texture, int x, int y) {
-  SDL_Rect rect = {
-      .x = x,
-      .y = y,
-  };
-  SDL_QueryTexture(texture, 0, 0, &rect.w, &rect.h);
-  SDL_RenderCopy(renderer, texture, 0, &rect);
+void blit(SDL_Renderer *renderer, SDL_Texture *texture, SDL_Rect *rect) {
+  SDL_RenderCopy(renderer, texture, 0, rect);
 }
 
 void prepare_scene(SDL_Renderer *renderer) {
