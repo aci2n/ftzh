@@ -17,4 +17,5 @@ void play_music(char const path[static 1]) {
     return;
   }
   Mix_PlayMusic(music, -1);
+	Mix_Volume(-1, 20);
 }
