@@ -1,10 +1,11 @@
 #include "stage.h"
-#include "SDL_scancode.h"
 #include "defs.h"
 #include "draw.h"
 #include "entity.h"
 #include "tools.h"
+#include <SDL.h>
 #include <SDL_render.h>
+#include <SDL_scancode.h>
 #include <math.h>
 #include <stdlib.h>
 
@@ -19,7 +20,7 @@ enum {
 struct Stage {
   SDL_Renderer *renderer;
   InputState *input_state;
-  EntityTexture textures[TEXTURE_COUNT];
+  SDL_Texture *textures[TEXTURE_COUNT];
 
   Entity player;
   Entity *fighter_tail;
@@ -43,27 +44,42 @@ static void clear_entities(Stage *stage) {
   stage->bullet_tail = 0;
 }
 
+static Entity create_player(SDL_Texture *texture) {
+  int w = 0;
+  int h = 0;
+  SDL_QueryTexture(texture, 0, 0, &w, &h);
+
+  return (Entity){
+      .x = PLAYER_START_X,
+      .y = PLAYER_START_Y,
+      .w = w,
+      .h = w,
+      .health = PLAYER_HEALTH,
+      .side = SIDE_PLAYER,
+      .texture = texture,
+  };
+}
+
 static void stage_reset(Stage *stage) {
   clear_entities(stage);
   stage->enemy_spawn_timer = 0;
   stage->reset_timer = FPS * 2;
-  stage->player = (Entity){
-      .x = PLAYER_START_X,
-      .y = PLAYER_START_Y,
-      .health = PLAYER_HEALTH,
-      .side = SIDE_PLAYER,
-      .texture = stage->textures[TEXTURE_PLAYER],
-  };
+  stage->player = create_player(stage->textures[TEXTURE_PLAYER]);
 }
 
 static void fire_bullet(Stage *stage, float offset_y) {
   Entity const *player = &stage->player;
   Entity *bullet = malloc(sizeof(Entity));
-  EntityTexture const texture = stage->textures[TEXTURE_BULLET];
+  SDL_Texture *texture = stage->textures[TEXTURE_BULLET];
+  int w = 0;
+  int h = 0;
+  SDL_QueryTexture(texture, 0, 0, &w, &h);
 
   (*bullet) = (Entity){
-      .x = player->x + player->texture.w,
-      .y = player->y + player->texture.h / 2.0 - offset_y * texture.h,
+      .x = player->x + player->w,
+      .y = player->y + player->h / 2.0 - offset_y * h,
+      .w = w,
+      .h = h,
       .dx = PLAYER_BULLET_SPEED,
       .dy = randf() * 2 - 1,
       .texture = texture,
@@ -106,10 +122,10 @@ static void do_player(Stage *stage) {
     fire_bullet(stage, 0.5);
     player->reload = PLAYER_RELOAD_RATE;
   }
-  player->x = min_int(SCREEN_WIDTH - player->texture.w,
-                      max_int(0, player->x + player->dx));
-  player->y = min_int(SCREEN_HEIGHT - player->texture.h,
-                      max_int(0, player->y + player->dy));
+  player->x =
+      min_int(SCREEN_WIDTH - player->w, max_int(0, player->x + player->dx));
+  player->y =
+      min_int(SCREEN_HEIGHT - player->h, max_int(0, player->y + player->dy));
 }
 
 static void do_bullets(Stage *stage) {
@@ -136,7 +152,7 @@ static void do_fighters(Stage *stage) {
     Entity **next = &fighter->next;
     fighter->x += fighter->dx;
     fighter->y += sin(fighter->x / ENEMY_DY_FACTOR) * fighter->dy;
-    if (fighter->health <= 0 || fighter->x <= -fighter->texture.w) {
+    if (fighter->health <= 0 || fighter->x <= -fighter->w) {
       *prev = *next;
       free(fighter);
     } else {
@@ -153,10 +169,16 @@ static void spawn_enemies(Stage *stage) {
   }
 
   Entity *enemy = malloc(sizeof(Entity));
+  SDL_Texture *texture = stage->textures[TEXTURE_ENEMY];
+  int w = 0;
+  int h = 0;
+  SDL_QueryTexture(texture, 0, 0, &w, &h);
 
   (*enemy) = (Entity){
       .x = SCREEN_WIDTH,
       .y = rand() % SCREEN_HEIGHT,
+      .w = w,
+      .h = h,
       .dx = -(ENEMY_DX_MIN + rand() % (ENEMY_DX_MAX - ENEMY_DX_MIN)),
       .dy = randf() * ENEMY_DY_MAX,
       .texture = stage->textures[TEXTURE_ENEMY],
@@ -213,10 +235,10 @@ static void blit_list(SDL_Renderer *renderer, Entity *head) {
     SDL_Rect rect = {
         .x = entity->x,
         .y = entity->y,
-        .w = entity->texture.w,
-        .h = entity->texture.h,
+        .w = entity->w,
+        .h = entity->h,
     };
-    blit(renderer, entity->texture.ref, &rect);
+    blit(renderer, entity->texture, &rect);
   }
 }
 
@@ -224,13 +246,6 @@ static void draw(Stage *stage) {
   blit_list(stage->renderer, &stage->player);
   blit_list(stage->renderer, stage->fighter_tail);
   blit_list(stage->renderer, stage->bullet_tail);
-}
-
-static EntityTexture create_entity_texture(SDL_Renderer *renderer,
-                                           char const path[static 1]) {
-  EntityTexture texture = {.ref = load_texture(renderer, path)};
-  SDL_QueryTexture(texture.ref, 0, 0, &texture.w, &texture.h);
-  return texture;
 }
 
 Stage *stage_new(App *app) { return stage_init(malloc(sizeof(Stage)), app); }
@@ -243,14 +258,11 @@ Stage *stage_init(Stage *stage, App *app) {
       .input_state = app_get_input_state(app),
       .textures =
           {
-              [TEXTURE_PLAYER] =
-                  create_entity_texture(renderer, "gfx/player.png"),
-              [TEXTURE_BULLET] =
-                  create_entity_texture(renderer, "gfx/bullet.png"),
-              [TEXTURE_ENEMY] =
-                  create_entity_texture(renderer, "gfx/enemy.png"),
+              [TEXTURE_PLAYER] = load_texture(renderer, "gfx/player.png"),
+              [TEXTURE_BULLET] = load_texture(renderer, "gfx/bullet.png"),
+              [TEXTURE_ENEMY] = load_texture(renderer, "gfx/enemy.png"),
               [TEXTURE_ENEMY_BULLET] =
-                  create_entity_texture(renderer, "gfx/enemy_bullet.png"),
+                  load_texture(renderer, "gfx/enemy_bullet.png"),
           },
   };
   stage_reset(stage);
@@ -266,7 +278,7 @@ void stage_invoke(Stage *stage) {
 void stage_destroy(Stage *stage) {
   clear_entities(stage);
   for (size_t i = 0; i < TEXTURE_COUNT; i++) {
-    SDL_DestroyTexture(stage->textures[i].ref);
+    SDL_DestroyTexture(stage->textures[i]);
   }
   free(stage);
 }

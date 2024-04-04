@@ -4,22 +4,17 @@
 #include <SDL.h>
 #include <stdbool.h>
 
-typedef struct EntityTexture EntityTexture;
-struct EntityTexture {
-  SDL_Texture *ref;
-  int w;
-  int h;
-};
-
 typedef struct Entity Entity;
 struct Entity {
   float x;
   float y;
+	int w;
+	int h;
   float dx;
   float dy;
   int health;
   int reload;
-  EntityTexture texture;
+  SDL_Texture *texture;
   Entity *next;
   int side;
 };
