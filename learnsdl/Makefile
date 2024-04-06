@@ -5,3 +5,6 @@ OBJS := $(patsubst %.c, %.o, $(wildcard *.c))
 
 main: $(OBJS) *.h
 	$(CC) $(LDLIBS) $(OBJS) -o main
+
+run: main
+	./main

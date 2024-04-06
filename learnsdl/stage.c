@@ -30,6 +30,7 @@ struct Stage {
   Entity *enemy_bullet_tail;
   int enemy_spawn_timer;
   int reset_timer;
+  size_t frame_counter;
 };
 
 static void free_entity_list(Entity **head) {
@@ -67,6 +68,7 @@ static void stage_reset(Stage *stage) {
   clear_entities(stage);
   stage->enemy_spawn_timer = 0;
   stage->reset_timer = FPS * 2;
+  stage->frame_counter = 0;
   stage->player = create_player(stage->textures[TEXTURE_PLAYER]);
 }
 
@@ -291,8 +293,13 @@ static void do_reset(Stage *stage) {
   }
 }
 
+static void do_frame_counter(Stage *stage) {
+  stage->frame_counter++;
+}
+
 static void logic(Stage *stage) {
   do_reset(stage);
+  do_frame_counter(stage);
   do_collisions(stage);
   do_player(stage);
   do_enemies(stage);
@@ -314,13 +321,39 @@ static void blit_list(SDL_Renderer *renderer, Entity *head) {
 }
 
 static void draw_background(Stage *stage) {
-	SDL_Texture *texture = stage->textures[TEXTURE_BACKGROUND];
-  SDL_Rect dest = (SDL_Rect){
+  SDL_Texture *texture = stage->textures[TEXTURE_BACKGROUND];
+  int texture_w = 0;
+  int texture_h = 0;
+  int offset_x = ((stage->frame_counter * BACKGROUND_SPEED) / FPS) % SCREEN_WIDTH;
+  SDL_QueryTexture(texture, 0, 0, &texture_w, &texture_h);
+
+  SDL_Rect src1 = (SDL_Rect){
+      .x = offset_x,
+      .y = 0,
+      .w = texture_w - offset_x,
+      .h = texture_h,
+  };
+  SDL_Rect dest1 = (SDL_Rect){
       .x = 0,
       .y = 0,
+      .w = texture_w - offset_x,
+      .h = SCREEN_HEIGHT,
   };
-  SDL_QueryTexture(texture, 0, 0, &dest.w, &dest.h);
-	SDL_RenderCopy(stage->renderer, texture, 0, &dest);
+  SDL_Rect src2 = (SDL_Rect){
+      .x = 0,
+      .y = 0,
+      .w = offset_x,
+      .h = texture_h,
+  };
+  SDL_Rect dest2 = (SDL_Rect){
+      .x = SCREEN_WIDTH - offset_x,
+      .y = 0,
+      .w = offset_x,
+      .h = SCREEN_HEIGHT,
+  };
+
+  SDL_RenderCopy(stage->renderer, texture, &src1, &dest1);
+  SDL_RenderCopy(stage->renderer, texture, &src2, &dest2);
 }
 
 static void draw(Stage *stage) {
