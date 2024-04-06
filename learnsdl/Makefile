@@ -3,4 +3,4 @@ CFLAGS += -ggdb -Og $(shell pkgconf --cflags $(EXTMODULES))
 LDFLAGS += $(shell pkgconf --libs $(EXTMODULES)) -lm
 OBJS := $(patsubst %.c, %.o, $(wildcard *.c))
 
-main: $(OBJS)
+main: $(OBJS) defs.h
