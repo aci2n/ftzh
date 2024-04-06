@@ -14,6 +14,8 @@ enum {
   TEXTURE_ENEMY,
   TEXTURE_BULLET,
   TEXTURE_ENEMY_BULLET,
+  TEXTURE_BACKGROUND,
+  TEXTURE_EXPLOSION,
   TEXTURE_COUNT,
 };
 
@@ -311,7 +313,18 @@ static void blit_list(SDL_Renderer *renderer, Entity *head) {
   }
 }
 
+static void draw_background(Stage *stage) {
+	SDL_Texture *texture = stage->textures[TEXTURE_BACKGROUND];
+  SDL_Rect dest = (SDL_Rect){
+      .x = 0,
+      .y = 0,
+  };
+  SDL_QueryTexture(texture, 0, 0, &dest.w, &dest.h);
+	SDL_RenderCopy(stage->renderer, texture, 0, &dest);
+}
+
 static void draw(Stage *stage) {
+  draw_background(stage);
   blit_list(stage->renderer, &stage->player);
   blit_list(stage->renderer, stage->enemy_tail);
   blit_list(stage->renderer, stage->bullet_tail);
@@ -333,6 +346,9 @@ Stage *stage_init(Stage *stage, App *app) {
               [TEXTURE_ENEMY] = load_texture(renderer, "gfx/enemy.png"),
               [TEXTURE_ENEMY_BULLET] =
                   load_texture(renderer, "gfx/bullet_enemy.png"),
+              [TEXTURE_BACKGROUND] =
+                  load_texture(renderer, "gfx/background.png"),
+              [TEXTURE_EXPLOSION] = load_texture(renderer, "gfx/explosion.png"),
           },
   };
   stage_reset(stage);

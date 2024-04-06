@@ -19,8 +19,8 @@
 
 #define ENEMY_DY_MAX 2
 #define ENEMY_DY_FACTOR 50.0
-#define ENEMY_BASE_SPAWN_RATE 20
-#define ENEMY_RAND_SPAWN_RATE 30
+#define ENEMY_BASE_SPAWN_RATE 18
+#define ENEMY_RAND_SPAWN_RATE 26
 #define ENEMY_DX_MIN 2
 #define ENEMY_DX_MAX 6
 #define ENEMY_STARTING_HEALTH 2
@@ -28,6 +28,8 @@
 
 #define SIDE_PLAYER 0
 #define SIDE_ENEMY 1
+
+#define MAX_STARS 500
 
 #endif
 

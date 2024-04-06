@@ -19,6 +19,35 @@ struct Entity {
   int side;
 };
 
+typedef struct Explosion Explosion;
+struct Explosion {
+  float x;
+	float y;
+	float dx;
+	float dy;
+	int r, g, b, a;
+	Explosion *next;
+};
+
+typedef struct Debris Debris;
+struct Debris {
+  float x;
+	float y;
+	float dx;
+	float dy;
+	SDL_Rect rect;
+	SDL_Rect texture;
+	int life;
+	Debris *next;
+};
+
+typedef struct Star Star;
+struct Star {
+  int x;
+	int y;
+	int speed;
+};
+
 bool entity_collision(Entity const[restrict static 1],
                       Entity const[restrict static 1]);
 void entity_log(Entity const[static 1]);
