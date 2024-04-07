@@ -1,2 +1,2 @@
 set debuginfod enabled off
-break fire_bullet
+# break draw_debris if stage->debris_tail

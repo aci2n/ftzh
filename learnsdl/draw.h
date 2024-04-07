@@ -10,4 +10,17 @@ void blit_rect(SDL_Renderer *renderer, SDL_Texture *texture, SDL_Rect *src,
 void prepare_scene(SDL_Renderer *renderer);
 void present_scene(SDL_Renderer *renderer);
 
+#define BLIT_LIST(RENDERER, TYPE, HEAD)                                        \
+  do {                                                                         \
+    for (TYPE *curr = (HEAD); curr; curr = curr->next) {                       \
+      SDL_Rect rect = {                                                        \
+          .x = curr->x,                                                        \
+          .y = curr->y,                                                        \
+          .w = curr->w,                                                        \
+          .h = curr->h,                                                        \
+      };                                                                       \
+      blit((RENDERER), curr->texture, &rect);                                  \
+    }                                                                          \
+  } while (false)
+
 #endif

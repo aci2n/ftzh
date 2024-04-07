@@ -31,12 +31,15 @@ struct Explosion {
 
 typedef struct Debris Debris;
 struct Debris {
-  float x;
-	float y;
 	float dx;
 	float dy;
-	SDL_Rect rect;
-	SDL_Rect texture;
+	int src_x;
+	int src_y;
+  float dst_x;
+	float dst_y;
+	int w;
+	int h;
+	SDL_Texture *texture;
 	int life;
 	Debris *next;
 };

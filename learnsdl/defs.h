@@ -30,7 +30,7 @@
 #define SIDE_ENEMY 1
 
 #define MAX_STARS 500
-#define BACKGROUND_SPEED 200
+#define BACKGROUND_SPEED 300
 
 
 #endif

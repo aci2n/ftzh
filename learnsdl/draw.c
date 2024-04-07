@@ -13,14 +13,15 @@ void blit(SDL_Renderer *renderer, SDL_Texture *texture, SDL_Rect *rect) {
   SDL_RenderCopy(renderer, texture, 0, rect);
 }
 
-void blit_rect(SDL_Renderer *renderer, SDL_Texture *texture, SDL_Rect *src, int x, int y) {
-	SDL_Rect dest = (SDL_Rect) {
-		.x = x,
-		.y = y,
-		.w = src->w,
-		.h = src->h,
-	};
-	SDL_RenderCopy(renderer, texture, src, &dest);
+void blit_rect(SDL_Renderer *renderer, SDL_Texture *texture, SDL_Rect *src,
+               int x, int y) {
+  SDL_Rect dest = (SDL_Rect){
+      .x = x,
+      .y = y,
+      .w = src->w,
+      .h = src->h,
+  };
+  SDL_RenderCopy(renderer, texture, src, &dest);
 }
 
 void prepare_scene(SDL_Renderer *renderer) {

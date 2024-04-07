@@ -310,9 +310,59 @@ static void do_starfield(Stage *stage) {
   }
 }
 
-static void do_explosions(Stage *stage) {}
+static void do_explosions(Stage *stage) {
+  Explosion **prev = &stage->explosion_tail;
+  for (Explosion *curr = *prev; curr;) {
+    Explosion **next = &curr->next;
+    curr->x -= curr->dx;
+    curr->y -= curr->dy;
+    if (--curr->a <= 0) {
+      *prev = *next;
+      free(curr);
+    } else {
+      prev = next;
+    }
+    curr = *next;
+  }
+}
 
-static void do_debris(Stage *stage) {}
+static void add_debris(Stage *stage, Entity *entity) {
+  size_t const bound = 2;
+  size_t const parts = pow(bound, 2);
+  size_t const part_w = entity->w / bound;
+  size_t const part_h = entity->h / bound;
+
+  for (size_t i = 0; i < parts; i++) {
+    Debris *debris = malloc(sizeof(*debris));
+    size_t const idx_x = i / bound;
+    size_t const idx_y = i % bound;
+
+    (*debris) = (Debris){
+        .dx = randf() * 4 - 2,
+        .dy = randf() * 4 - 2,
+        .src_x = idx_x * part_w,
+        .src_y = idx_y * part_h,
+        .dst_x = stage->player.x + idx_x * part_w,
+        .dst_y = stage->player.y + idx_y * part_h,
+        .w = part_w,
+        .h = part_h,
+        .life = 10,
+        .texture = entity->texture,
+        .next = stage->debris_tail,
+    };
+    stage->debris_tail = debris;
+  }
+}
+
+static void do_debris(Stage *stage) {
+  for (Debris *curr = stage->debris_tail; curr; curr = curr->next) {
+    curr->dst_x += curr->dx;
+    curr->dst_y += curr->dy;
+  }
+  if (stage->player.health <= 0 && stage->debris_tail == 0) {
+    add_debris(stage, &stage->player);
+  }
+}
 
 static void logic(Stage *stage) {
   do_reset(stage);
@@ -326,18 +376,6 @@ static void logic(Stage *stage) {
   do_enemy_bullets(stage);
   do_bullets(stage);
   spawn_enemies(stage);
-}
-
-static void blit_list(SDL_Renderer *renderer, Entity *head) {
-  for (Entity *entity = head; entity; entity = entity->next) {
-    SDL_Rect rect = {
-        .x = entity->x,
-        .y = entity->y,
-        .w = entity->w,
-        .h = entity->h,
-    };
-    blit(renderer, entity->texture, &rect);
-  }
 }
 
 static void draw_background(Stage *stage) {
@@ -386,15 +424,30 @@ static void draw_stars(Stage *stage) {
   }
 }
 
+static void draw_debris(Stage *stage) {
+  Entity const player = stage->player;
+  for (Debris *curr = stage->debris_tail; curr; curr = curr->next) {
+    SDL_Rect src = {
+        .x = curr->src_x,
+        .y = curr->src_y,
+        .w = curr->w,
+        .h = curr->h,
+    };
+    blit_rect(stage->renderer, curr->texture, &src, curr->dst_x, curr->dst_y);
+  }
+}
+
 static void draw(Stage *stage) {
   draw_background(stage);
-  if (stage->player.health > 0) {
-    blit_list(stage->renderer, &stage->player);
-  }
-  blit_list(stage->renderer, stage->enemy_tail);
-  blit_list(stage->renderer, stage->bullet_tail);
-  blit_list(stage->renderer, stage->enemy_bullet_tail);
   draw_stars(stage);
+  if (stage->player.health > 0) {
+    BLIT_LIST(stage->renderer, Entity, &stage->player);
+  }
+  BLIT_LIST(stage->renderer, Entity, stage->enemy_tail);
+  BLIT_LIST(stage->renderer, Entity, stage->enemy_tail);
+  BLIT_LIST(stage->renderer, Entity, stage->bullet_tail);
+  BLIT_LIST(stage->renderer, Entity, stage->enemy_bullet_tail);
+  draw_debris(stage);
 }
 
 Stage *stage_new(App *app) { return stage_init(malloc(sizeof(Stage)), app); }
