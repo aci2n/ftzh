@@ -28,24 +28,20 @@ struct Stage {
   Entity *enemy_tail;
   Entity *bullet_tail;
   Entity *enemy_bullet_tail;
+  Debris *debris_tail;
+  Explosion *explosion_tail;
   int enemy_spawn_timer;
   int reset_timer;
   size_t frame_counter;
+  Star stars[MAX_STARS];
 };
 
-static void free_entity_list(Entity **head) {
-  for (Entity *entity = *head; entity;) {
-    Entity *next = entity->next;
-    free(entity);
-    entity = next;
-  }
-  *head = 0;
-}
-
 static void clear_entities(Stage *stage) {
-  free_entity_list(&stage->enemy_tail);
-  free_entity_list(&stage->bullet_tail);
-  free_entity_list(&stage->enemy_bullet_tail);
+  FREE_LIST(Entity, &stage->enemy_tail, next);
+  FREE_LIST(Entity, &stage->bullet_tail, next);
+  FREE_LIST(Entity, &stage->enemy_bullet_tail, next);
+  FREE_LIST(Debris, &stage->debris_tail, next);
+  FREE_LIST(Explosion, &stage->explosion_tail, next);
 }
 
 static Entity create_player(SDL_Texture *texture) {
@@ -64,8 +60,19 @@ static Entity create_player(SDL_Texture *texture) {
   };
 }
 
+static void init_starfield(Stage *stage) {
+  for (size_t i = 0; i < MAX_STARS; i++) {
+    stage->stars[i] = (Star){
+        .x = rand() % SCREEN_WIDTH,
+        .y = rand() % SCREEN_HEIGHT,
+        .speed = 1 + rand() % 8,
+    };
+  }
+}
+
 static void stage_reset(Stage *stage) {
   clear_entities(stage);
+  init_starfield(stage);
   stage->enemy_spawn_timer = 0;
   stage->reset_timer = FPS * 2;
   stage->frame_counter = 0;
@@ -120,8 +127,6 @@ static void do_player(Stage *stage) {
   Entity *player = &stage->player;
 
   if (player->health <= 0) {
-    player->w = 0;
-    player->h = 0;
     return;
   }
 
@@ -293,13 +298,28 @@ static void do_reset(Stage *stage) {
   }
 }
 
-static void do_frame_counter(Stage *stage) {
-  stage->frame_counter++;
+static void do_frame_counter(Stage *stage) { stage->frame_counter++; }
+
+static void do_starfield(Stage *stage) {
+  for (size_t i = 0; i < MAX_STARS; i++) {
+    Star *star = &stage->stars[i];
+    star->x -= star->speed;
+    if (star->x < 0) {
+      star->x += SCREEN_WIDTH;
+    }
+  }
 }
+
+static void do_explosions(Stage *stage) {}
+
+static void do_debris(Stage *stage) {}
 
 static void logic(Stage *stage) {
   do_reset(stage);
   do_frame_counter(stage);
+  do_starfield(stage);
+  do_debris(stage);
+  do_explosions(stage);
   do_collisions(stage);
   do_player(stage);
   do_enemies(stage);
@@ -324,7 +344,8 @@ static void draw_background(Stage *stage) {
   SDL_Texture *texture = stage->textures[TEXTURE_BACKGROUND];
   int texture_w = 0;
   int texture_h = 0;
-  int offset_x = ((stage->frame_counter * BACKGROUND_SPEED) / FPS) % SCREEN_WIDTH;
+  int offset_x =
+      ((stage->frame_counter * BACKGROUND_SPEED) / FPS) % SCREEN_WIDTH;
   SDL_QueryTexture(texture, 0, 0, &texture_w, &texture_h);
 
   SDL_Rect src1 = (SDL_Rect){
@@ -356,12 +377,24 @@ static void draw_background(Stage *stage) {
   SDL_RenderCopy(stage->renderer, texture, &src2, &dest2);
 }
 
+static void draw_stars(Stage *stage) {
+  for (size_t i = 0; i < MAX_STARS; i++) {
+    Star *star = &stage->stars[i];
+    int c = star->speed * 32;
+    SDL_SetRenderDrawColor(stage->renderer, c, c, c, 255);
+    SDL_RenderDrawLine(stage->renderer, star->x, star->y, star->x + 3, star->y);
+  }
+}
+
 static void draw(Stage *stage) {
   draw_background(stage);
-  blit_list(stage->renderer, &stage->player);
+  if (stage->player.health > 0) {
+    blit_list(stage->renderer, &stage->player);
+  }
   blit_list(stage->renderer, stage->enemy_tail);
   blit_list(stage->renderer, stage->bullet_tail);
   blit_list(stage->renderer, stage->enemy_bullet_tail);
+  draw_stars(stage);
 }
 
 Stage *stage_new(App *app) { return stage_init(malloc(sizeof(Stage)), app); }

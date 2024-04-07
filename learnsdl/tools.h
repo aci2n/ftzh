@@ -8,4 +8,14 @@ int collision(int x1, int y1, int w1, int h1, int x2, int y2, int w2, int h2);
 void calc_slope(int x1, int y1, int x2, int y2, float dx[restrict static 1],
                 float dy[restrict static 1]);
 
+#define FREE_LIST(TYPE, HEAD, NEXT)                                            \
+  do {                                                                         \
+    for (TYPE *curr = *(HEAD); curr;) {                                        \
+      TYPE *next = curr->NEXT;                                                 \
+      free(curr);                                                              \
+      curr = next;                                                             \
+    }                                                                          \
+    *(HEAD) = 0;                                                               \
+  } while (false)
+
 #endif
