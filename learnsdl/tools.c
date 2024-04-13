@@ -13,12 +13,13 @@ int collision(int x1, int y1, int w1, int h1, int x2, int y2, int w2, int h2) {
 }
 
 void calc_slope(int x1, int y1, int x2, int y2, float dx[restrict static 1],
-               float dy[restrict static 1]) {
-	float steps = max_int(abs(x1 - x2), abs(y1 - y2));
-	if (steps == 0) {
-		*dx = 0;
-		*dy = 0;
-	}
-	*dx = (x1 - x2) / steps;
-	*dy = (y1 - y2) / steps;
+                float dy[restrict static 1]) {
+  float steps = max_int(abs(x1 - x2), abs(y1 - y2));
+  if (steps == 0) {
+    *dx = 0;
+    *dy = 0;
+  } else {
+    *dx = (x1 - x2) / steps;
+    *dy = (y1 - y2) / steps;
+  }
 }
