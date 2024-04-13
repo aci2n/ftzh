@@ -1,3 +1,4 @@
+#include "defs.h"
 #include "app.h"
 #include "audio.h"
 #include "draw.h"
@@ -11,13 +12,15 @@
 #include <time.h>
 
 void cap_framerate(long then[static 1], float remainder[static 1]) {
-  long const frame_time = SDL_GetTicks() - *then;
-  long const wait = 16 + *remainder - frame_time;
+	static long const ms_per_frame = 1000 / FPS;
+	
+  long const frame_time = SDL_GetTicks64() - *then;
+  long const wait = ms_per_frame - frame_time;
   if (wait > 0) {
     SDL_Delay(wait);
   }
-  *remainder = *remainder - (int)*remainder + 0.667;
-  *then = SDL_GetTicks();
+  /* *remainder = *remainder - (int)*remainder + 0.667; */
+  *then = SDL_GetTicks64();
 }
 
 int main(int argc, char const *const argv[static argc - 1]) {
