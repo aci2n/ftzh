@@ -22,8 +22,7 @@ void sound_store_play_music(SoundStore *store) {
 }
 
 void sound_store_play_sound(SoundStore *store, size_t sound, size_t channel) {
-  if (channel < CH_COUNT && sound < SND_COUNT &&
-      store->sounds[sound]) {
+  if (channel < CH_COUNT && sound < SND_COUNT && store->sounds[sound]) {
     Mix_PlayChannel(channel, store->sounds[sound], 0);
   }
 }
@@ -39,7 +38,7 @@ SoundStore *sound_store_init(SoundStore *store) {
           {
               [SND_PLAYER_FIRE] = Mix_LoadWAV("sound/lasershot.ogg"),
               [SND_PLAYER_DIE] = Mix_LoadWAV("sound/playerdeath.ogg"),
-							[SND_PLAYER_HIT] = Mix_LoadWAV("sound/playerhit.wav"),
+              [SND_PLAYER_HIT] = Mix_LoadWAV("sound/playerhit.wav"),
           },
   };
   return store;

@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #include <time.h>
 
-void cap_framerate(long then[static 1], float remainder[static 1]) {
+static void cap_framerate(long then[static 1], float remainder[static 1]) {
   static long const ms_per_frame = 1000 / FPS;
 
   long const frame_time = SDL_GetTicks64() - *then;
