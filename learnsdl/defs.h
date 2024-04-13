@@ -36,7 +36,7 @@ enum {
 #define ENEMY_DX_MIN 5
 #define ENEMY_DX_MAX 12
 #define ENEMY_STARTING_HEALTH 2
-#define ENEMY_BULLET_SPEED 12
+#define ENEMY_BULLET_SPEED 10
 
 #define SIDE_PLAYER 0
 #define SIDE_ENEMY 1
