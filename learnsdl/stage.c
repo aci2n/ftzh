@@ -160,6 +160,7 @@ static void do_player(Stage *stage) {
   if (input_state[SDL_SCANCODE_LCTRL] && player->reload == 0) {
     fire_bullet(stage, -1.5);
     fire_bullet(stage, 0.5);
+		sound_store_play_sound(stage->sound_store, SND_PLAYER_FIRE, CH_PLAYER);
     player->reload = PLAYER_RELOAD_RATE;
   }
   player->x =
@@ -367,6 +368,7 @@ static void do_debris(Stage *stage) {
 }
 
 static void logic(Stage *stage) {
+	sound_store_play_music(stage->sound_store);
   do_reset(stage);
   do_frame_counter(stage);
   do_starfield(stage);

@@ -9,14 +9,16 @@ void audio_init() {
   Mix_AllocateChannels(MAX_SOUND_CHANNELS);
 }
 
-void play_music(char const path[static 1]) {
-  Mix_Music *music = Mix_LoadMUS(path);
-  if (!music) {
-    fprintf(stderr, "error loading music %s\n", path);
-    return;
-  }
-  Mix_PlayMusic(music, -1);
-  Mix_Volume(-1, 20);
+void sound_store_play_music(SoundStore *store) {
+	if (!Mix_PlayingMusic()) {
+		Mix_PlayMusic(store->music, -1);
+	}
+}
+
+void sound_store_play_sound(SoundStore *store, size_t sound, size_t channel) {
+	if (channel < MAX_SOUND_CHANNELS && sound < SND_COUNT && store->sounds[sound]) {
+		Mix_PlayChannel(channel, store->sounds[sound], 0);
+	}
 }
 
 SoundStore *sound_store_new() {
@@ -25,6 +27,7 @@ SoundStore *sound_store_new() {
 
 SoundStore *sound_store_init(SoundStore *store) {
   *store = (SoundStore){
+      .music = Mix_LoadMUS("sound/mus.opus"),
       .sounds =
           {
               [SND_PLAYER_FIRE] = Mix_LoadWAV("sound/lasershot.ogg"),
@@ -39,5 +42,8 @@ void sound_store_destroy(SoundStore *store) {
       Mix_FreeChunk(store->sounds[i]);
     }
   }
+	Mix_HaltMusic();
+  Mix_FreeMusic(store->music);
   free(store);
 }
+

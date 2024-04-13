@@ -11,7 +11,6 @@ enum {
   CH_ANY = -1,
 	CH_PLAYER,
 	CH_ALIEN_FIRE,
-	CH_COUNT,
 };
 
 enum {
