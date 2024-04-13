@@ -1,4 +1,5 @@
 #include "stage.h"
+#include "audio.h"
 #include "defs.h"
 #include "draw.h"
 #include "entity.h"
@@ -34,6 +35,7 @@ struct Stage {
   int reset_timer;
   size_t frame_counter;
   Star stars[MAX_STARS];
+	SoundStore *sound_store;
 };
 
 static void clear_entities(Stage *stage) {
@@ -469,6 +471,7 @@ Stage *stage_init(Stage *stage, App *app) {
                   load_texture(renderer, "gfx/background.png"),
               [TEXTURE_EXPLOSION] = load_texture(renderer, "gfx/explosion.png"),
           },
+			.sound_store = sound_store_new(),
   };
   stage_reset(stage);
 
@@ -485,5 +488,6 @@ void stage_destroy(Stage *stage) {
   for (size_t i = 0; i < TEXTURE_COUNT; i++) {
     SDL_DestroyTexture(stage->textures[i]);
   }
+	sound_store_destroy(stage->sound_store);
   free(stage);
 }
