@@ -35,7 +35,7 @@ struct Stage {
   int reset_timer;
   size_t frame_counter;
   Star stars[MAX_STARS];
-	SoundStore *sound_store;
+  SoundStore *sound_store;
 };
 
 static void clear_entities(Stage *stage) {
@@ -106,14 +106,21 @@ static void fire_bullet(Stage *stage, float offset_y) {
   stage->bullet_tail = bullet;
 }
 
-static void do_player_collisions(Stage *stage) {
+bool do_player_collisions(Stage *stage) {
   Entity *player = &stage->player;
+
+  if (player->health <= 0) {
+    return true;
+  }
+
+  bool player_hit = false;
 
   for (Entity *bullet = stage->enemy_bullet_tail; bullet;
        bullet = bullet->next) {
     if (entity_collision(bullet, player)) {
       player->health--;
       bullet->health--;
+      player_hit = true;
     }
   }
 
@@ -121,18 +128,25 @@ static void do_player_collisions(Stage *stage) {
     if (entity_collision(enemy, player)) {
       enemy->health--;
       player->health--;
+      player_hit = true;
     }
   }
+
+  if (player->health <= 0) {
+    sound_store_play_sound(stage->sound_store, SND_PLAYER_DIE, CH_PLAYER);
+  } else if (player_hit) {
+    sound_store_play_sound(stage->sound_store, SND_PLAYER_HIT, CH_ENEMY);
+  }
+
+  return player->health <= 0;
 }
 
 static void do_player(Stage *stage) {
   Entity *player = &stage->player;
 
-  if (player->health <= 0) {
+  if (do_player_collisions(stage)) {
     return;
   }
-
-  do_player_collisions(stage);
 
   InputState const *input_state = stage->input_state;
   float speed = PLAYER_SPEED;
@@ -160,7 +174,7 @@ static void do_player(Stage *stage) {
   if (input_state[SDL_SCANCODE_LCTRL] && player->reload == 0) {
     fire_bullet(stage, -1.5);
     fire_bullet(stage, 0.5);
-		sound_store_play_sound(stage->sound_store, SND_PLAYER_FIRE, CH_PLAYER);
+    sound_store_play_sound(stage->sound_store, SND_PLAYER_FIRE, CH_PLAYER);
     player->reload = PLAYER_RELOAD_RATE;
   }
   player->x =
@@ -368,7 +382,7 @@ static void do_debris(Stage *stage) {
 }
 
 static void logic(Stage *stage) {
-	sound_store_play_music(stage->sound_store);
+  sound_store_play_music(stage->sound_store);
   do_reset(stage);
   do_frame_counter(stage);
   do_starfield(stage);
@@ -473,7 +487,7 @@ Stage *stage_init(Stage *stage, App *app) {
                   load_texture(renderer, "gfx/background.png"),
               [TEXTURE_EXPLOSION] = load_texture(renderer, "gfx/explosion.png"),
           },
-			.sound_store = sound_store_new(),
+      .sound_store = sound_store_new(),
   };
   stage_reset(stage);
 
@@ -490,6 +504,6 @@ void stage_destroy(Stage *stage) {
   for (size_t i = 0; i < TEXTURE_COUNT; i++) {
     SDL_DestroyTexture(stage->textures[i]);
   }
-	sound_store_destroy(stage->sound_store);
+  sound_store_destroy(stage->sound_store);
   free(stage);
 }
