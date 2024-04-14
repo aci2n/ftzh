@@ -1,6 +1,7 @@
 #include "app.h"
 #include "defs.h"
 #include "audio.h"
+#include "font.h"
 #include <SDL_image.h>
 #include <SDL_render.h>
 #include <SDL_video.h>
@@ -56,6 +57,9 @@ void app_destroy(App *app) {
 	SDL_DestroyWindow(app->window);
 	SDL_DestroyRenderer(app->renderer);
 	free(app);
+	IMG_Quit();
+	font_cleanup();
+	audio_cleanup();
 	SDL_Quit();
 }
 

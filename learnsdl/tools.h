@@ -16,6 +16,8 @@ void calc_slope(int x1, int y1, int x2, int y2, float dx[restrict static 1],
       curr = next;                                                             \
     }                                                                          \
     *(HEAD) = 0;                                                               \
-  } while (false)
+} while (false)
+
+#define TYPE_NEW(TYPE, ...) TYPE ## _init(malloc(sizeof(TYPE), __VA_ARGS__)
 
 #endif

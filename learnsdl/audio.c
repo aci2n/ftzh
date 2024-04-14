@@ -15,6 +15,10 @@ void audio_init() {
   Mix_AllocateChannels(CH_COUNT);
 }
 
+void audio_cleanup() {
+	Mix_Quit();
+}
+
 void sound_store_play_music(SoundStore *store) {
   if (!Mix_PlayingMusic()) {
     Mix_PlayMusic(store->music, -1);

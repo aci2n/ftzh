@@ -5,6 +5,7 @@
 
 void play_music(char const path[static 1]);
 void audio_init();
+void audio_cleanup();
 
 typedef struct SoundStore SoundStore;
 
