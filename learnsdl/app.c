@@ -40,7 +40,8 @@ App *app_init(App *app) {
 
 	IMG_Init(IMG_INIT_PNG | IMG_INIT_JPG);
 	audio_init();
-
+	font_init();
+	
 	(*app) = (App){
 			.window = window,
 			.renderer = renderer,

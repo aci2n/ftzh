@@ -44,7 +44,7 @@ enum {
 #define MAX_STARS 500
 #define BACKGROUND_SPEED 300
 
-#define FONT_SIZE 12
+#define FONT_SIZE 24
 
 #endif
 

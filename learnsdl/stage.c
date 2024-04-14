@@ -3,6 +3,7 @@
 #include "defs.h"
 #include "draw.h"
 #include "entity.h"
+#include "font.h"
 #include "tools.h"
 #include <SDL.h>
 #include <SDL_render.h>
@@ -18,6 +19,11 @@ enum {
   TEXTURE_BACKGROUND,
   TEXTURE_EXPLOSION,
   TEXTURE_COUNT,
+};
+
+enum {
+  FONT_MAIN,
+  FONT_COUNT,
 };
 
 struct Stage {
@@ -36,6 +42,7 @@ struct Stage {
   size_t frame_counter;
   Star stars[MAX_STARS];
   SoundStore *sound_store;
+  FontStore *font_store;
 };
 
 static void clear_entities(Stage *stage) {
@@ -455,9 +462,27 @@ static void draw_debris(Stage *stage) {
   }
 }
 
+static void draw_hud(Stage *stage) {
+  static struct SDL_Color color_white = {
+      .r = 255, .g = 255, .b = 255, .a = 255};
+
+  char health_text[32] = {0};
+  sprintf(health_text, "Health: %d", max_int(0, stage->player.health));
+  SDL_Texture *health_texture = font_store_texture(stage->font_store, FONT_MAIN,
+                                                   health_text, color_white);
+  SDL_Rect health_rect = {
+      .x = 0,
+      .y = 0,
+  };
+  SDL_QueryTexture(health_texture, 0, 0, &health_rect.w, &health_rect.h);
+  blit(stage->renderer, health_texture, &health_rect);
+  SDL_DestroyTexture(health_texture);
+}
+
 static void draw(Stage *stage) {
   draw_background(stage);
   draw_stars(stage);
+  draw_hud(stage);
   if (stage->player.health > 0) {
     BLIT_LIST(stage->renderer, Entity, &stage->player);
   }
@@ -472,6 +497,9 @@ Stage *stage_new(App *app) { return stage_init(malloc(sizeof(Stage)), app); }
 
 Stage *stage_init(Stage *stage, App *app) {
   SDL_Renderer *renderer = app_get_renderer(app);
+  char const *const fonts[FONT_COUNT] = {
+      [FONT_MAIN] = "font/main.ttf",
+  };
 
   (*stage) = (Stage){
       .renderer = renderer,
@@ -488,6 +516,8 @@ Stage *stage_init(Stage *stage, App *app) {
               [TEXTURE_EXPLOSION] = load_texture(renderer, "gfx/explosion.png"),
           },
       .sound_store = sound_store_new(),
+      .font_store = font_store_init(malloc(sizeof(FontStore *)), renderer,
+                                    ARR_LEN(fonts), fonts),
   };
   stage_reset(stage);
 
